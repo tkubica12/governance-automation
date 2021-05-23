@@ -1,6 +1,6 @@
 resource "azurerm_subscription" "b2b" {
   alias             = "b2b"
-  subscription_name = "B2B"
+  subscription_name = "demo-B2B"
   subscription_id   = "7bead9cf-e290-4c50-8651-fcc22c9c70a5"
 }
 

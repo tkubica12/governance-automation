@@ -1,9 +1,11 @@
+// Name subscription (if you ommit subscription id this creates subscription also)
 resource "azurerm_subscription" "eshop" {
   alias             = "eshop"
-  subscription_name = "E-shop"
+  subscription_name = "demo-E-shop"
   subscription_id   = "4fd63c38-a6be-4fb1-ac9e-ab1781af69ad"
 }
 
+// Assign access control rules
 locals {
   eshopRbac = {
     "36fdd187-d556-4e31-9ac6-51a8b595a2a7" = "/subscriptions/${azurerm_subscription.eshop.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635" // user1@tomaskubica.cz as Owner

@@ -1,5 +1,6 @@
 // Get all subscriptions to be used as assignable scope
 data "azurerm_subscriptions" "available" {
+  display_name_contains = "demo"
 }
 
 data "azurerm_subscription" "main" {
