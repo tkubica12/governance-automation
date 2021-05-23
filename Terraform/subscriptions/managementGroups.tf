@@ -11,7 +11,7 @@ resource "azurerm_management_group" "sandbox" {
   parent_management_group_id = azurerm_management_group.non-production.id
 
   subscription_ids = [
-    "4fd63c38-a6be-4fb1-ac9e-ab1781af69ad"
+    # "4fd63c38-a6be-4fb1-ac9e-ab1781af69ad"
   ]
 }
 
@@ -20,7 +20,7 @@ resource "azurerm_management_group" "ecommerce-mg" {
   parent_management_group_id = azurerm_management_group.production.id
 
   subscription_ids = [
-    "52835e25-3a32-4eb3-8e03-4851cdc189c9",
+    "4fd63c38-a6be-4fb1-ac9e-ab1781af69ad",
     "7bead9cf-e290-4c50-8651-fcc22c9c70a5"
   ]
 }
