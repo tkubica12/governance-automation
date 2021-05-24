@@ -21,3 +21,18 @@ Current status of Terraform/subscriptions
   - locals list is used to setup roles and mapping to users and groups - all by IDs
   - RBAC assignment loop based on locals list
 - policies.tf contains custom initiatives definitions
+
+# Sandbox environment
+This scenario implements simple sandbox subscription solution:
+- Each sandbox gets its own resource group with one Owner, who can provide access to other team members
+- Each sandbox has budget created
+- Budgets use Azure Functions to execute actions:
+  - On 80% Owner is informed
+  - On 100% all VMs in resource group are stopped
+  - On 120% resource group is deleted and sandbox environment is destroyed
+
+Current automation can be found in Terraform/sandbox
+- inputs.tf contains map of sandboxes (in my example research1 etc.) with certain required parameters such as OwnerId (object ID of user account or AAD group), OwnerEmail (to be written to tag) and monthly budget amount
+- supportInfra.tf deploy automation infrastructure to react on budget overspend. This contains storage account (used to store Azure Functions deployment code), Azure Functions with PowerShell and Action Groups
+- main.tf contains logic to loop throw inputs and create resource groups, access control and budgets
+- Azure Functions logic is stored in /automationFunctions to be reused regardless of type of Infra as Code tool(eg. Bicep version). Logic is written as simple PowerShell Azure commands, but can be reimplemented using Python or any other option. Note that for simplicity budget name = resource group name.
