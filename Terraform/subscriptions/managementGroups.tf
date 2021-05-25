@@ -1,13 +1,16 @@
 resource "azurerm_management_group" "production" {
   display_name = "Production"
+  id           = "Production"
 }
 
 resource "azurerm_management_group" "non-production" {
   display_name = "Non-production"
+  id           = "Non-production"
 }
 
 resource "azurerm_management_group" "sandbox" {
   display_name               = "Sandbox"
+  id                         = "Sandbox"
   parent_management_group_id = azurerm_management_group.non-production.id
 
   subscription_ids = [
@@ -17,6 +20,7 @@ resource "azurerm_management_group" "sandbox" {
 
 resource "azurerm_management_group" "ecommerce-mg" {
   display_name               = "E-commerce"
+  id                         = "E-commerce"
   parent_management_group_id = azurerm_management_group.production.id
 
   subscription_ids = [

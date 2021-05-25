@@ -1,0 +1,490 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-08-01/tenantDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.3.539.46024",
+      "templateHash": "8324976796775276073"
+    }
+  },
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "managementGroups",
+      "scope": "/",
+      "location": "[deployment().location]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-08-01/tenantDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.3.539.46024",
+              "templateHash": "12992339793469280174"
+            }
+          },
+          "functions": [],
+          "variables": {
+            "prodMgRbac": [
+              {
+                "principal": "cd640ddd-1ca3-4a91-8255-e8c3553bf112",
+                "role": "/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635"
+              }
+            ]
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Management/managementGroups",
+              "apiVersion": "2020-05-01",
+              "name": "Production"
+            },
+            {
+              "type": "Microsoft.Management/managementGroups",
+              "apiVersion": "2020-05-01",
+              "name": "Non-production"
+            },
+            {
+              "type": "Microsoft.Management/managementGroups",
+              "apiVersion": "2020-05-01",
+              "name": "Sandbox",
+              "properties": {
+                "details": {
+                  "parent": {
+                    "id": "[tenantResourceId('Microsoft.Management/managementGroups', 'Non-production')]"
+                  }
+                }
+              },
+              "dependsOn": [
+                "[tenantResourceId('Microsoft.Management/managementGroups', 'Non-production')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Management/managementGroups",
+              "apiVersion": "2020-05-01",
+              "name": "E-commerce",
+              "properties": {
+                "details": {
+                  "parent": {
+                    "id": "[tenantResourceId('Microsoft.Management/managementGroups', 'Production')]"
+                  }
+                }
+              },
+              "dependsOn": [
+                "[tenantResourceId('Microsoft.Management/managementGroups', 'Production')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Management/managementGroups/subscriptions",
+              "apiVersion": "2020-05-01",
+              "name": "[format('{0}/{1}', 'E-commerce', '4fd63c38-a6be-4fb1-ac9e-ab1781af69ad')]",
+              "dependsOn": [
+                "[tenantResourceId('Microsoft.Management/managementGroups', 'E-commerce')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Management/managementGroups/subscriptions",
+              "apiVersion": "2020-05-01",
+              "name": "[format('{0}/{1}', 'E-commerce', '7bead9cf-e290-4c50-8651-fcc22c9c70a5')]",
+              "dependsOn": [
+                "[tenantResourceId('Microsoft.Management/managementGroups', 'E-commerce')]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "rbac",
+                "count": "[length(variables('prodMgRbac'))]"
+              },
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "name": "[variables('prodMgRbac')[copyIndex()].principal]",
+              "properties": {
+                "principalId": "[variables('prodMgRbac')[copyIndex()].principal]",
+                "roleDefinitionId": "[variables('prodMgRbac')[copyIndex()].role]"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "subscriptions",
+      "scope": "/",
+      "location": "[deployment().location]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-08-01/tenantDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.3.539.46024",
+              "templateHash": "12285466742347631123"
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.Subscription/aliases",
+              "apiVersion": "2020-09-01",
+              "name": "eshop",
+              "properties": {
+                "subscriptionId": "4fd63c38-a6be-4fb1-ac9e-ab1781af69ad"
+              }
+            },
+            {
+              "type": "Microsoft.Subscription/aliases",
+              "apiVersion": "2020-09-01",
+              "name": "b2b",
+              "properties": {
+                "subscriptionId": "7bead9cf-e290-4c50-8651-fcc22c9c70a5"
+              }
+            }
+          ],
+          "outputs": {
+            "eshopSubscriptionId": {
+              "type": "string",
+              "value": "[reference(tenantResourceId('Microsoft.Subscription/aliases', 'eshop')).subscriptionId]"
+            },
+            "b2bSubscriptionId": {
+              "type": "string",
+              "value": "[reference(tenantResourceId('Microsoft.Subscription/aliases', 'b2b')).subscriptionId]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "customRoles",
+      "subscriptionId": "4fd63c38-a6be-4fb1-ac9e-ab1781af69ad",
+      "location": "[deployment().location]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.3.539.46024",
+              "templateHash": "4201019940069858459"
+            }
+          },
+          "functions": [],
+          "variables": {
+            "allSubscriptions": [
+              "/subscriptions/4fd63c38-a6be-4fb1-ac9e-ab1781af69ad",
+              "/subscriptions/7bead9cf-e290-4c50-8651-fcc22c9c70a5"
+            ]
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleDefinitions",
+              "apiVersion": "2018-07-01",
+              "name": "[guid('limitedContributor')]",
+              "properties": {
+                "description": "Limited Contributor role with no permissions to manipulate route tables",
+                "roleName": "limitedContributor",
+                "permissions": [
+                  {
+                    "actions": [
+                      "*"
+                    ],
+                    "notActions": [
+                      "Microsoft.Authorization/*/Delete",
+                      "Microsoft.Authorization/*/Write",
+                      "Microsoft.Authorization/elevateAccess/Action",
+                      "Microsoft.Blueprint/blueprintAssignments/write",
+                      "Microsoft.Blueprint/blueprintAssignments/delete",
+                      "Microsoft.Compute/galleries/share/action",
+                      "Microsoft.Network/routeTables/write",
+                      "Microsoft.Network/routeTables/join/action",
+                      "Microsoft.Network/routeTables/delete"
+                    ]
+                  }
+                ],
+                "assignableScopes": "[variables('allSubscriptions')]"
+              }
+            }
+          ],
+          "outputs": {
+            "limitedContributorRole": {
+              "type": "string",
+              "value": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', guid('limitedContributor'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "policies",
+      "scope": "[format('Microsoft.Management/managementGroups/{0}', 'Production')]",
+      "location": "[deployment().location]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.3.539.46024",
+              "templateHash": "15702531619194438632"
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/policySetDefinitions",
+              "apiVersion": "2020-09-01",
+              "name": "companyPolicy",
+              "properties": {
+                "policyType": "Custom",
+                "displayName": "Example company policy",
+                "policyDefinitions": [
+                  {
+                    "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/cd3aa116-8754-49c9-a813-ad46512ece54",
+                    "policyDefinitionReferenceId": "inherit-owner",
+                    "parameters": {
+                      "tagName": {
+                        "value": "owner"
+                      }
+                    }
+                  },
+                  {
+                    "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/726aca4c-86e9-4b04-b0c5-073027359532",
+                    "policyDefinitionReferenceId": "write-class-unknown",
+                    "parameters": {
+                      "tagName": {
+                        "value": "class"
+                      },
+                      "tagValue": {
+                        "value": "unknown"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "eshopSubscription",
+      "subscriptionId": "4fd63c38-a6be-4fb1-ac9e-ab1781af69ad",
+      "location": "[deployment().location]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.3.539.46024",
+              "templateHash": "4071676128609163099"
+            }
+          },
+          "functions": [],
+          "variables": {
+            "eshopRbac": [
+              {
+                "principal": "36fdd187-d556-4e31-9ac6-51a8b595a2a7",
+                "role": "/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635"
+              },
+              {
+                "principal": "b402e595-21e4-4a80-a4aa-bff61cb035a2",
+                "role": "/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635"
+              },
+              {
+                "principal": "b28dec96-590c-45bd-8811-7dfb5f6fcf9b",
+                "role": "/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+              }
+            ]
+          },
+          "resources": [
+            {
+              "copy": {
+                "name": "rbac",
+                "count": "[length(variables('eshopRbac'))]"
+              },
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "name": "[variables('eshopRbac')[copyIndex()].principal]",
+              "properties": {
+                "principalId": "[variables('eshopRbac')[copyIndex()].principal]",
+                "roleDefinitionId": "[variables('eshopRbac')[copyIndex()].role]"
+              }
+            },
+            {
+              "type": "Microsoft.Resources/resourceGroups",
+              "apiVersion": "2021-01-01",
+              "name": "networking-rg",
+              "location": "westeurope"
+            },
+            {
+              "type": "Microsoft.Consumption/budgets",
+              "apiVersion": "2019-10-01",
+              "name": "overall",
+              "properties": {
+                "amount": 1000,
+                "timeGrain": "Monthly",
+                "category": "Cost",
+                "timePeriod": {
+                  "startDate": "2021-05-01T00:00:00Z",
+                  "endDate": "2031-12-01T00:00:00Z"
+                },
+                "notifications": {
+                  "basicNotification": {
+                    "enabled": true,
+                    "threshold": 100,
+                    "thresholdType": "Actual",
+                    "operator": "GreaterThan",
+                    "contactEmails": [
+                      "foo@example.com",
+                      "bar@example.com"
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "b2bSubscription",
+      "subscriptionId": "7bead9cf-e290-4c50-8651-fcc22c9c70a5",
+      "location": "[deployment().location]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "limitedContributorRole": {
+            "value": "[reference(subscriptionResourceId('4fd63c38-a6be-4fb1-ac9e-ab1781af69ad', 'Microsoft.Resources/deployments', 'customRoles'), '2019-10-01').outputs.limitedContributorRole.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.3.539.46024",
+              "templateHash": "9179568446475154441"
+            }
+          },
+          "parameters": {
+            "limitedContributorRole": {
+              "type": "string"
+            }
+          },
+          "functions": [],
+          "variables": {
+            "b2bRbac": [
+              {
+                "principal": "36fdd187-d556-4e31-9ac6-51a8b595a2a7",
+                "role": "/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635"
+              },
+              {
+                "principal": "720303ea-d09e-4e49-8a21-6634b99b9a17",
+                "role": "/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635"
+              },
+              {
+                "principal": "b28dec96-590c-45bd-8811-7dfb5f6fcf9b",
+                "role": "/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+              },
+              {
+                "principal": "4417880f-3709-45c8-9e5d-9015438dba7d",
+                "role": "[parameters('limitedContributorRole')]"
+              }
+            ]
+          },
+          "resources": [
+            {
+              "copy": {
+                "name": "rbac",
+                "count": "[length(variables('b2bRbac'))]"
+              },
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "name": "[variables('b2bRbac')[copyIndex()].principal]",
+              "properties": {
+                "principalId": "[variables('b2bRbac')[copyIndex()].principal]",
+                "roleDefinitionId": "[variables('b2bRbac')[copyIndex()].role]"
+              }
+            },
+            {
+              "type": "Microsoft.Resources/resourceGroups",
+              "apiVersion": "2021-01-01",
+              "name": "networking-rg",
+              "location": "westeurope"
+            },
+            {
+              "type": "Microsoft.Consumption/budgets",
+              "apiVersion": "2019-10-01",
+              "name": "overall",
+              "properties": {
+                "amount": 600,
+                "timeGrain": "Monthly",
+                "category": "Cost",
+                "timePeriod": {
+                  "startDate": "2021-05-01T00:00:00Z",
+                  "endDate": "2031-12-01T00:00:00Z"
+                },
+                "notifications": {
+                  "basicNotification": {
+                    "enabled": true,
+                    "threshold": 100,
+                    "thresholdType": "Actual",
+                    "operator": "GreaterThan",
+                    "contactEmails": [
+                      "foo@example.com",
+                      "bar@example.com"
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('4fd63c38-a6be-4fb1-ac9e-ab1781af69ad', 'Microsoft.Resources/deployments', 'customRoles')]"
+      ]
+    }
+  ]
+}

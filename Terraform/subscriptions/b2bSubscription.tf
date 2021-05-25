@@ -1,9 +1,3 @@
-resource "azurerm_subscription" "b2b" {
-  alias             = "b2b"
-  subscription_name = "demo-B2B"
-  subscription_id   = "7bead9cf-e290-4c50-8651-fcc22c9c70a5"
-}
-
 locals {
   b2bRbac = {
     "36fdd187-d556-4e31-9ac6-51a8b595a2a7" = "/subscriptions/${azurerm_subscription.b2b.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635" // user1@tomaskubica.cz as Owner
@@ -27,13 +21,14 @@ provider "azurerm" {
   features {}
 }
 
-// Budgets
-resource "azurerm_resource_group" "b2b-budgets-rg" {
+// Networking infrastructure resource group
+resource "azurerm_resource_group" "b2b-networking-rg" {
   provider = azurerm.b2b
-  name     = "budgets-rg"
+  name     = "networking-rg"
   location = "West Europe"
 }
 
+// Budgets
 resource "azurerm_consumption_budget_subscription" "b2b-overall" {
   provider = azurerm.b2b
   name            = "overall"

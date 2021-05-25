@@ -1,10 +1,3 @@
-// Name subscription (if you ommit subscription id this creates subscription also)
-resource "azurerm_subscription" "eshop" {
-  alias             = "eshop"
-  subscription_name = "demo-E-shop"
-  subscription_id   = "4fd63c38-a6be-4fb1-ac9e-ab1781af69ad"
-}
-
 // Assign access control rules
 locals {
   eshopRbac = {
@@ -28,15 +21,16 @@ provider "azurerm" {
   features {}
 }
 
-// Budgets
-resource "azurerm_resource_group" "eshop-budgets-rg" {
+// Networking infrastructure resource group
+resource "azurerm_resource_group" "eshop-networking-rg" {
   provider = azurerm.eshop
-  name     = "budgets-rg"
+  name     = "networking-rg"
   location = "West Europe"
 }
 
+// Budgets
 resource "azurerm_consumption_budget_subscription" "eshop-overall" {
-  provider = azurerm.eshop
+  provider        = azurerm.eshop
   name            = "overall"
   subscription_id = azurerm_subscription.eshop.subscription_id
 
