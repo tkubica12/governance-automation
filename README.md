@@ -1,6 +1,8 @@
 # Cloud governance automation
 This repo contains example desired state automation for Azure governance with Terraform and Bicep.
 
+Note such scenarios are usually most complex to automate as resources are on very different scopes such as tenant level, management group, subscription or resource group and Terraform support might be lacking or be delayed (eg. budgets where finally added in May 2021 after few ears being available in Azure). Deploying plain infrastructure is usually much easier so do not freak out - for your networks, VMs and AKS it is gonna be piece of cake :)
+
 # Subscriptions management including Management Groups, access control, policies and budgets
 This scenario provides basic structure for Azure governance:
 - Creates hierarchy of Management Groups
