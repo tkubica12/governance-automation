@@ -38,7 +38,6 @@ Current status of Bicep/subscriptions
 
 TBD - Bicep module to demonstrate resource deployment in subscription such as spoke VNET
 
-
 # Sandbox environment
 This scenario implements simple sandbox subscription solution:
 - Each sandbox gets its own resource group with one Owner, who can provide access to other team members
@@ -47,9 +46,9 @@ This scenario implements simple sandbox subscription solution:
   - On 80% Owner is informed
   - On 100% all VMs in resource group are stopped
   - On 120% resource group is deleted and sandbox environment is destroyed
+- There is one drawback you should be aware of due to how budgets are implemented in Azure - start time of budget must not be in distant past (for monthly budget it must be first of current month) when budget is created. So if you create budget, 3 months later delete and re-run template, you need to modify start time. This does not have negative effect on budget itself.
 
 ## Terraform
-
 Current automation can be found in Terraform/sandbox
 - inputs.tf contains map of sandboxes (in my example research1 etc.) with certain required parameters such as OwnerId (object ID of user account or AAD group), OwnerEmail (to be written to tag) and monthly budget amount
 - supportInfra.tf deploy automation infrastructure to react on budget overspend. This contains storage account (used to store Azure Functions deployment code), Azure Functions with PowerShell and Action Groups
@@ -57,7 +56,13 @@ Current automation can be found in Terraform/sandbox
 - Azure Functions logic is stored in /automationFunctions to be reused regardless of type of Infra as Code tool(eg. Bicep version). Logic is written as simple PowerShell Azure commands, but can be reimplemented using Python or any other option. Note that for simplicity budget name = resource group name.
 
 ## Bicep
-TBD
+Current automation can be found in Bicep/sandbox
+- Bicep does not support imperative steps such as upload something to storage directly. I could have use deploymentScript feature, but that would add unnecessary complexity since all we need is to make Azure Functions code zip file available in storage. Use commands in **prepare.sh** to upload code to storage or reference different store (such as GitHub repo).
+- **main.bicep** contains sandboxes var in which you define all your sandboxes. It deploys all components and modules. main.bicep is targeting subscription scope.
+- **rbac.bicep** is separate module because it configures RBAC on per resource group basis so cannot be deployed from main.bicep directly - module with RG scope is called in a loop
+- **infrastructure.bicep** contains resource group scoped deployment of basic infrastructure such as Azure Function and Action Groups
+- **budgets.bicep** is called in a loop and configures budget and notification for each sandbox
+
 
 
 

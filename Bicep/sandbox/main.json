@@ -1,0 +1,427 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.3.539.46024",
+      "templateHash": "7463631772785713278"
+    }
+  },
+  "parameters": {
+    "packageUrl": {
+      "type": "string"
+    }
+  },
+  "functions": [],
+  "variables": {
+    "location": "westeurope",
+    "sandboxes": [
+      {
+        "name": "research1",
+        "ownerId": "7424fb4c-5e9f-45cd-9f7d-453d45655e75",
+        "ownerEmail": "tomas.kubica@microsoft.com",
+        "monthlyBudget": 100
+      },
+      {
+        "name": "research2",
+        "ownerId": "7424fb4c-5e9f-45cd-9f7d-453d45655e75",
+        "ownerEmail": "tomas.kubica@microsoft.com",
+        "monthlyBudget": 80
+      },
+      {
+        "name": "research3",
+        "ownerId": "7424fb4c-5e9f-45cd-9f7d-453d45655e75",
+        "ownerEmail": "tomas.kubica@microsoft.com",
+        "monthlyBudget": 5
+      }
+    ]
+  },
+  "resources": [
+    {
+      "copy": {
+        "name": "rg",
+        "count": "[length(variables('sandboxes'))]"
+      },
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2021-01-01",
+      "name": "[variables('sandboxes')[copyIndex()].name]",
+      "location": "[variables('location')]"
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "name": "[guid('functionsRbac')]",
+      "properties": {
+        "principalId": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'budgets'), 'Microsoft.Resources/deployments', 'infrastructure'), '2019-10-01').outputs.functionsIdentityId.value]",
+        "roleDefinitionId": "[format('/subscriptions/{0}/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635', subscription().subscriptionId)]"
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'budgets'), 'Microsoft.Resources/deployments', 'infrastructure')]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "rbac",
+        "count": "[length(variables('sandboxes'))]"
+      },
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "[format('rbac-{0}', variables('sandboxes')[copyIndex()].name)]",
+      "resourceGroup": "[variables('sandboxes')[copyIndex()].name]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "name": {
+            "value": "[guid(variables('sandboxes')[copyIndex()].name)]"
+          },
+          "ownerId": {
+            "value": "[variables('sandboxes')[copyIndex()].ownerId]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.3.539.46024",
+              "templateHash": "16635456582757912794"
+            }
+          },
+          "parameters": {
+            "ownerId": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "name": "[parameters('name')]",
+              "properties": {
+                "principalId": "[parameters('ownerId')]",
+                "roleDefinitionId": "[format('/subscriptions/{0}/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635', subscription().subscriptionId)]"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('sandboxes')[copyIndex()].name)]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "infrastructure",
+      "resourceGroup": "budgets",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "packageUrl": {
+            "value": "[parameters('packageUrl')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.3.539.46024",
+              "templateHash": "17676798768093639422"
+            }
+          },
+          "parameters": {
+            "packageUrl": {
+              "type": "string"
+            }
+          },
+          "functions": [],
+          "variables": {
+            "location": "[resourceGroup().location]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2020-10-01",
+              "name": "[uniqueString(resourceGroup().id)]",
+              "location": "[variables('location')]",
+              "properties": {
+                "sku": {
+                  "name": "PerGB2018"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2020-02-02-preview",
+              "name": "[uniqueString(resourceGroup().id)]",
+              "location": "[variables('location')]",
+              "kind": "web",
+              "properties": {
+                "Application_Type": "web",
+                "Flow_Type": "Bluefield",
+                "Request_Source": "rest",
+                "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', uniqueString(resourceGroup().id))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', uniqueString(resourceGroup().id))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2020-12-01",
+              "name": "functionsPlan",
+              "location": "[variables('location')]",
+              "sku": {
+                "name": "Y1",
+                "tier": "Dynamic"
+              }
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2021-02-01",
+              "name": "[uniqueString(resourceGroup().id)]",
+              "location": "[variables('location')]",
+              "kind": "StorageV2",
+              "sku": {
+                "name": "Standard_LRS"
+              }
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2020-12-01",
+              "name": "[format('budgets{0}', uniqueString(resourceGroup().id))]",
+              "location": "[variables('location')]",
+              "kind": "functionapp",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', 'functionsPlan')]",
+                "siteConfig": {
+                  "appSettings": [
+                    {
+                      "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                      "value": "[reference(resourceId('Microsoft.Insights/components', uniqueString(resourceGroup().id))).InstrumentationKey]"
+                    },
+                    {
+                      "name": "FUNCTIONS_WORKER_RUNTIME",
+                      "value": "powershell"
+                    },
+                    {
+                      "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                      "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', uniqueString(resourceGroup().id), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', uniqueString(resourceGroup().id)), '2021-02-01').keys[0].value)]"
+                    },
+                    {
+                      "name": "WEBSITE_RUN_FROM_PACKAGE",
+                      "value": "[parameters('packageUrl')]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Insights/components', uniqueString(resourceGroup().id))]",
+                "[resourceId('Microsoft.Web/serverfarms', 'functionsPlan')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', uniqueString(resourceGroup().id))]"
+              ]
+            },
+            {
+              "type": "microsoft.insights/actionGroups",
+              "apiVersion": "2019-06-01",
+              "name": "budgetReactionStop",
+              "location": "global",
+              "properties": {
+                "groupShortName": "budgetStop",
+                "enabled": true,
+                "azureFunctionReceivers": [
+                  {
+                    "name": "function",
+                    "functionName": "budgetActionStop",
+                    "functionAppResourceId": "[resourceId('Microsoft.Web/sites', format('budgets{0}', uniqueString(resourceGroup().id)))]",
+                    "httpTriggerUrl": "[format('https://{0}.azurewebsites.net/api/budgetActionStop?code={1}', format('budgets{0}', uniqueString(resourceGroup().id)), listkeys(concat(resourceId('Microsoft.Web/sites', format('budgets{0}', uniqueString(resourceGroup().id))), '/host/default'), '2016-08-01').masterKey)]",
+                    "useCommonAlertSchema": false
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', format('budgets{0}', uniqueString(resourceGroup().id)))]"
+              ]
+            },
+            {
+              "type": "microsoft.insights/actionGroups",
+              "apiVersion": "2019-06-01",
+              "name": "budgetReactionDelete",
+              "location": "global",
+              "properties": {
+                "groupShortName": "budgetDelete",
+                "enabled": true,
+                "azureFunctionReceivers": [
+                  {
+                    "name": "function",
+                    "functionName": "budgetActionDelete",
+                    "functionAppResourceId": "[resourceId('Microsoft.Web/sites', format('budgets{0}', uniqueString(resourceGroup().id)))]",
+                    "httpTriggerUrl": "[format('https://{0}.azurewebsites.net/api/budgetActionDelete?code={1}', format('budgets{0}', uniqueString(resourceGroup().id)), listkeys(concat(resourceId('Microsoft.Web/sites', format('budgets{0}', uniqueString(resourceGroup().id))), '/host/default'), '2016-08-01').masterKey)]",
+                    "useCommonAlertSchema": false
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', format('budgets{0}', uniqueString(resourceGroup().id)))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "functionsIdentityId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', format('budgets{0}', uniqueString(resourceGroup().id))), '2020-12-01', 'full').identity.principalId]"
+            },
+            "actionStop": {
+              "type": "string",
+              "value": "[resourceId('microsoft.insights/actionGroups', 'budgetReactionStop')]"
+            },
+            "actionDelete": {
+              "type": "string",
+              "value": "[resourceId('microsoft.insights/actionGroups', 'budgetReactionDelete')]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "copy": {
+        "name": "budget",
+        "count": "[length(variables('sandboxes'))]"
+      },
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "[format('budget-{0}', variables('sandboxes')[copyIndex()].name)]",
+      "resourceGroup": "[variables('sandboxes')[copyIndex()].name]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "name": {
+            "value": "[variables('sandboxes')[copyIndex()].name]"
+          },
+          "ownerEmail": {
+            "value": "[variables('sandboxes')[copyIndex()].OwnerEmail]"
+          },
+          "start": {
+            "value": "2021-05-01T00:00:00Z"
+          },
+          "amount": {
+            "value": "[variables('sandboxes')[copyIndex()].monthlyBudget]"
+          },
+          "actionStop": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'budgets'), 'Microsoft.Resources/deployments', 'infrastructure'), '2019-10-01').outputs.actionStop.value]"
+          },
+          "actionDelete": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'budgets'), 'Microsoft.Resources/deployments', 'infrastructure'), '2019-10-01').outputs.actionDelete.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.3.539.46024",
+              "templateHash": "651924913414447802"
+            }
+          },
+          "parameters": {
+            "name": {
+              "type": "string"
+            },
+            "amount": {
+              "type": "int"
+            },
+            "start": {
+              "type": "string"
+            },
+            "ownerEmail": {
+              "type": "string"
+            },
+            "actionStop": {
+              "type": "string"
+            },
+            "actionDelete": {
+              "type": "string"
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.Consumption/budgets",
+              "apiVersion": "2019-10-01",
+              "name": "[parameters('name')]",
+              "properties": {
+                "category": "Cost",
+                "amount": "[parameters('amount')]",
+                "timeGrain": "Monthly",
+                "timePeriod": {
+                  "startDate": "[parameters('start')]",
+                  "endDate": "2031-12-01T00:00:00Z"
+                },
+                "notifications": {
+                  "basicNotification": {
+                    "enabled": true,
+                    "threshold": 80,
+                    "thresholdType": "Actual",
+                    "operator": "GreaterThan",
+                    "contactEmails": [
+                      "[parameters('ownerEmail')]"
+                    ]
+                  },
+                  "stop": {
+                    "enabled": true,
+                    "threshold": 100,
+                    "thresholdType": "Actual",
+                    "operator": "GreaterThan",
+                    "contactEmails": [
+                      "[parameters('ownerEmail')]"
+                    ],
+                    "contactGroups": [
+                      "[parameters('actionStop')]"
+                    ]
+                  },
+                  "delete": {
+                    "enabled": true,
+                    "threshold": 120,
+                    "thresholdType": "Actual",
+                    "operator": "GreaterThan",
+                    "contactEmails": [
+                      "[parameters('ownerEmail')]"
+                    ],
+                    "contactGroups": [
+                      "[parameters('actionDelete')]"
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'budgets'), 'Microsoft.Resources/deployments', 'infrastructure')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('sandboxes')[copyIndex()].name)]"
+      ]
+    }
+  ]
+}
