@@ -66,7 +66,7 @@ module budget 'budget.bicep' = [for (config, i) in sandboxes: {
   params: {
     name: config.name
     ownerEmail: config.OwnerEmail
-    start: '2021-05-01T00:00:00Z'
+    start: '2021-06-01T00:00:00Z'
     amount: config.monthlyBudget
     actionStop: infrastructure.outputs.actionStop
     actionDelete: infrastructure.outputs.actionDelete

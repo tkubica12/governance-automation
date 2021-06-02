@@ -1,0 +1,6 @@
+name: az-sandbox
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+description: Azure governance sandbox automation

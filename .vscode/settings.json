@@ -1,0 +1,5 @@
+{
+    "git.ignoreLimitWarning": true,
+    "python.pythonPath": "Pulumi\\sandbox\\venv\\Scripts\\python.exe",
+    "python.formatting.provider": "yapf"
+}

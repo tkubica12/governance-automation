@@ -1,5 +1,5 @@
 # Cloud governance automation
-This repo contains example desired state automation for Azure governance with Terraform and Bicep.
+This repo contains example desired state automation for Azure governance with Terraform, Bicep and Pulumi.
 
 Note such scenarios are usually most complex to automate as resources are on very different scopes such as tenant level, management group, subscription or resource group and Terraform support might be lacking or be delayed (eg. budgets where finally added in May 2021 after few ears being available in Azure). Deploying plain infrastructure is usually much easier so do not freak out - for your networks, VMs and AKS it is gonna be piece of cake :)
 
@@ -65,7 +65,12 @@ Current automation can be found in Bicep/sandbox
 - **infrastructure.bicep** contains resource group scoped deployment of basic infrastructure such as Azure Function and Action Groups
 - **budgets.bicep** is called in a loop and configures budget and notification for each sandbox
 
-
+## Pulumi
+Current automation can be found in Pulumi/sandbox
+- Similar to Terraform option this solution takes care also for uploading deployment zip to storage
+- Python was used as programming language
+- Solution is simple enough so single file was used with no additional classes
+- Note: I have some issue in code with azure-native:storage:listStorageAccountSAS accessing resource that not yet exist during preview phase. For first time you might need to use "pulumi up -f" to skip preview and deploy right away
 
 
 
