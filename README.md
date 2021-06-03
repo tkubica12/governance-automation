@@ -64,6 +64,8 @@ Current automation can be found in Bicep/sandbox
 - **rbac.bicep** is separate module because it configures RBAC on per resource group basis so cannot be deployed from main.bicep directly - module with RG scope is called in a loop
 - **infrastructure.bicep** contains resource group scoped deployment of basic infrastructure such as Azure Function and Action Groups
 
+**Note - with Bicep you cannot simple delete budget object from sandboxes vars because subscription-scoped deployments do not support mode Complete. Therefore Bicep will not delete resources when deleted from template - you will need to run simple script to do so (delete resource group and budget).**
+
 ## Pulumi
 Current automation can be found in Pulumi/sandbox
 - Similar to Terraform option this solution takes care also for uploading deployment zip to storage
