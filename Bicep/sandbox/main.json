@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.3.539.46024",
-      "templateHash": "7463631772785713278"
+      "templateHash": "3184854089234250581"
     }
   },
   "parameters": {
@@ -55,6 +55,71 @@
       "properties": {
         "principalId": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'budgets'), 'Microsoft.Resources/deployments', 'infrastructure'), '2019-10-01').outputs.functionsIdentityId.value]",
         "roleDefinitionId": "[format('/subscriptions/{0}/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635', subscription().subscriptionId)]"
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'budgets'), 'Microsoft.Resources/deployments', 'infrastructure')]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "budget",
+        "count": "[length(variables('sandboxes'))]"
+      },
+      "type": "Microsoft.Consumption/budgets",
+      "apiVersion": "2019-10-01",
+      "name": "[format('budget-{0}', variables('sandboxes')[copyIndex()].name)]",
+      "properties": {
+        "category": "Cost",
+        "amount": "[variables('sandboxes')[copyIndex()].monthlyBudget]",
+        "filter": {
+          "dimensions": {
+            "name": "ResourceGroupName",
+            "operator": "In",
+            "values": [
+              "[variables('sandboxes')[copyIndex()].name]"
+            ]
+          }
+        },
+        "timeGrain": "Monthly",
+        "timePeriod": {
+          "startDate": "2021-06-01T00:00:00Z",
+          "endDate": "2031-12-01T00:00:00Z"
+        },
+        "notifications": {
+          "basicNotification": {
+            "enabled": true,
+            "threshold": 80,
+            "thresholdType": "Actual",
+            "operator": "GreaterThan",
+            "contactEmails": [
+              "[variables('sandboxes')[copyIndex()].OwnerEmail]"
+            ]
+          },
+          "stop": {
+            "enabled": true,
+            "threshold": 100,
+            "thresholdType": "Actual",
+            "operator": "GreaterThan",
+            "contactEmails": [
+              "[variables('sandboxes')[copyIndex()].OwnerEmail]"
+            ],
+            "contactGroups": [
+              "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'budgets'), 'Microsoft.Resources/deployments', 'infrastructure'), '2019-10-01').outputs.actionStop.value]"
+            ]
+          },
+          "delete": {
+            "enabled": true,
+            "threshold": 120,
+            "thresholdType": "Actual",
+            "operator": "GreaterThan",
+            "contactEmails": [
+              "[variables('sandboxes')[copyIndex()].OwnerEmail]"
+            ],
+            "contactGroups": [
+              "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'budgets'), 'Microsoft.Resources/deployments', 'infrastructure'), '2019-10-01').outputs.actionDelete.value]"
+            ]
+          }
+        }
       },
       "dependsOn": [
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'budgets'), 'Microsoft.Resources/deployments', 'infrastructure')]"
@@ -299,129 +364,6 @@
           }
         }
       }
-    },
-    {
-      "copy": {
-        "name": "budget",
-        "count": "[length(variables('sandboxes'))]"
-      },
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-10-01",
-      "name": "[format('budget-{0}', variables('sandboxes')[copyIndex()].name)]",
-      "resourceGroup": "[variables('sandboxes')[copyIndex()].name]",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
-        },
-        "mode": "Incremental",
-        "parameters": {
-          "name": {
-            "value": "[variables('sandboxes')[copyIndex()].name]"
-          },
-          "ownerEmail": {
-            "value": "[variables('sandboxes')[copyIndex()].OwnerEmail]"
-          },
-          "start": {
-            "value": "2021-05-01T00:00:00Z"
-          },
-          "amount": {
-            "value": "[variables('sandboxes')[copyIndex()].monthlyBudget]"
-          },
-          "actionStop": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'budgets'), 'Microsoft.Resources/deployments', 'infrastructure'), '2019-10-01').outputs.actionStop.value]"
-          },
-          "actionDelete": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'budgets'), 'Microsoft.Resources/deployments', 'infrastructure'), '2019-10-01').outputs.actionDelete.value]"
-          }
-        },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.3.539.46024",
-              "templateHash": "651924913414447802"
-            }
-          },
-          "parameters": {
-            "name": {
-              "type": "string"
-            },
-            "amount": {
-              "type": "int"
-            },
-            "start": {
-              "type": "string"
-            },
-            "ownerEmail": {
-              "type": "string"
-            },
-            "actionStop": {
-              "type": "string"
-            },
-            "actionDelete": {
-              "type": "string"
-            }
-          },
-          "functions": [],
-          "resources": [
-            {
-              "type": "Microsoft.Consumption/budgets",
-              "apiVersion": "2019-10-01",
-              "name": "[parameters('name')]",
-              "properties": {
-                "category": "Cost",
-                "amount": "[parameters('amount')]",
-                "timeGrain": "Monthly",
-                "timePeriod": {
-                  "startDate": "[parameters('start')]",
-                  "endDate": "2031-12-01T00:00:00Z"
-                },
-                "notifications": {
-                  "basicNotification": {
-                    "enabled": true,
-                    "threshold": 80,
-                    "thresholdType": "Actual",
-                    "operator": "GreaterThan",
-                    "contactEmails": [
-                      "[parameters('ownerEmail')]"
-                    ]
-                  },
-                  "stop": {
-                    "enabled": true,
-                    "threshold": 100,
-                    "thresholdType": "Actual",
-                    "operator": "GreaterThan",
-                    "contactEmails": [
-                      "[parameters('ownerEmail')]"
-                    ],
-                    "contactGroups": [
-                      "[parameters('actionStop')]"
-                    ]
-                  },
-                  "delete": {
-                    "enabled": true,
-                    "threshold": 120,
-                    "thresholdType": "Actual",
-                    "operator": "GreaterThan",
-                    "contactEmails": [
-                      "[parameters('ownerEmail')]"
-                    ],
-                    "contactGroups": [
-                      "[parameters('actionDelete')]"
-                    ]
-                  }
-                }
-              }
-            }
-          ]
-        }
-      },
-      "dependsOn": [
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, 'budgets'), 'Microsoft.Resources/deployments', 'infrastructure')]",
-        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('sandboxes')[copyIndex()].name)]"
-      ]
     }
   ]
 }

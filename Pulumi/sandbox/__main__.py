@@ -178,17 +178,33 @@ for i, sandbox in enumerate(sandboxes):
         role_definition_id="/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635",
         scope=sandboxResourceGroups[i].id)
 
+subscriptionScope = Output.concat("/subscriptions/", azure_native.authorization.get_client_config().subscription_id)
+pulumi.export("debug",subscriptionScope)
+
 ## Budget
 for i, sandbox in enumerate(sandboxes):
     azure_native.consumption.Budget(sandbox['name'],
         amount=sandbox['monthlyBudget'],
         budget_name=sandbox['name'],
         category="Cost",
-        scope=sandboxResourceGroups[i].id,
+        scope=subscriptionScope,
         time_grain="Monthly",
         time_period=azure_native.consumption.BudgetTimePeriodArgs(
             end_date="2031-12-01T00:00:00Z",
             start_date="2021-06-01T00:00:00Z",
+        ),
+        filter=azure_native.consumption.BudgetFilterArgs(
+            and_=[
+                azure_native.consumption.BudgetFilterPropertiesArgs(
+                    dimensions=azure_native.consumption.BudgetComparisonExpressionArgs(
+                        name="ResourceGroupName",
+                        operator="In",
+                        values=[
+                            sandbox['name']
+                        ],
+                    ),
+                ),
+            ],
         ),
         notifications={
             "basicNotification": azure_native.consumption.NotificationArgs(

@@ -63,7 +63,6 @@ Current automation can be found in Bicep/sandbox
 - **main.bicep** contains sandboxes var in which you define all your sandboxes. It deploys all components and modules. main.bicep is targeting subscription scope.
 - **rbac.bicep** is separate module because it configures RBAC on per resource group basis so cannot be deployed from main.bicep directly - module with RG scope is called in a loop
 - **infrastructure.bicep** contains resource group scoped deployment of basic infrastructure such as Azure Function and Action Groups
-- **budgets.bicep** is called in a loop and configures budget and notification for each sandbox
 
 ## Pulumi
 Current automation can be found in Pulumi/sandbox

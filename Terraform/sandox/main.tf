@@ -69,16 +69,25 @@ resource "azurerm_monitor_action_group" "delete" {
 
 
 // Budget
-resource "azurerm_consumption_budget_resource_group" "loop" {
-  for_each          = local.sandboxes
-  name              = each.key
-  resource_group_id = azurerm_resource_group.loop[each.key].id
+resource "azurerm_consumption_budget_subscription" "loop" {
+  for_each        = local.sandboxes
+  name            = each.key
+  subscription_id = data.azurerm_subscription.current.subscription_id
 
   amount     = each.value.monthlyBudget
   time_grain = "Monthly"
 
+  filter {
+    dimension {
+      name = "ResourceGroupName"
+      values = [
+        each.key,
+      ]
+    }
+  }
+
   time_period {
-    start_date = "2021-05-01T00:00:00Z"
+    start_date = "2021-06-01T00:00:00Z"
     end_date   = "2031-12-01T00:00:00Z"
   }
 

@@ -60,15 +60,59 @@ resource functionsRbac 'Microsoft.Authorization/roleAssignments@2020-04-01-previ
   }
 }
 
-module budget 'budget.bicep' = [for (config, i) in sandboxes: {
-  name: 'budget-${config.name}'
-  scope: rg[i]
-  params: {
-    name: config.name
-    ownerEmail: config.OwnerEmail
-    start: '2021-06-01T00:00:00Z'
+resource budget 'Microsoft.Consumption/budgets@2019-10-01' = [for (config, i) in sandboxes:  {
+  name: config.name
+  properties: {
+    category: 'Cost'
     amount: config.monthlyBudget
-    actionStop: infrastructure.outputs.actionStop
-    actionDelete: infrastructure.outputs.actionDelete
+    filter: {
+      dimensions: {
+        name: 'ResourceGroupName'
+        operator: 'In'
+        values: [
+          config.name
+        ]
+      }
+    }
+    timeGrain: 'Monthly'
+    timePeriod: {
+      startDate: '2021-06-01T00:00:00Z'
+      endDate: '2031-12-01T00:00:00Z'
+    }
+    notifications: {
+      basicNotification: {
+        enabled: true
+        threshold: 80
+        thresholdType: 'Actual'
+        operator: 'GreaterThan'
+        contactEmails: [
+          config.OwnerEmail
+        ]
+      }  
+      stop: {
+        enabled: true
+        threshold: 100
+        thresholdType: 'Actual'
+        operator: 'GreaterThan'
+        contactEmails: [
+          config.OwnerEmail
+        ]
+        contactGroups: [
+          infrastructure.outputs.actionStop
+        ]
+      }  
+      delete: {
+        enabled: true
+        threshold: 120
+        thresholdType: 'Actual'
+        operator: 'GreaterThan'
+        contactEmails: [
+          config.OwnerEmail
+        ]
+        contactGroups: [
+          infrastructure.outputs.actionDelete
+        ]
+      }  
+    }
   }
 }]
