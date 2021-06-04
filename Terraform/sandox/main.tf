@@ -86,8 +86,14 @@ resource "azurerm_consumption_budget_subscription" "loop" {
     }
   }
 
+  lifecycle {
+    ignore_changes = [
+      time_period["start_date"]
+    ]
+  }
+
   time_period {
-    start_date = "2021-06-01T00:00:00Z"
+    start_date = "${formatdate("YYYY-MM", timestamp())}-01T00:00:00Z"
     end_date   = "2031-12-01T00:00:00Z"
   }
 
