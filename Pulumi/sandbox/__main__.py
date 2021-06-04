@@ -5,6 +5,7 @@ import pulumi_azure_native as azure_native
 from pulumi_azure_native.insights.v20200202preview import Component
 from pulumi import *
 from pulumi import export
+from datetime import datetime, timezone   
 
 # Budgets inputs
 sandboxes = [
@@ -181,6 +182,9 @@ for i, sandbox in enumerate(sandboxes):
 subscriptionScope = Output.concat("/subscriptions/", azure_native.authorization.get_client_config().subscription_id)
 pulumi.export("debug",subscriptionScope)
 
+d = datetime.now(timezone.utc).astimezone()
+startDate = str(d.year) + "-" + str(d.month) + "-01T09:00:00Z"
+
 ## Budget
 for i, sandbox in enumerate(sandboxes):
     azure_native.consumption.Budget(sandbox['name'],
@@ -189,9 +193,10 @@ for i, sandbox in enumerate(sandboxes):
         category="Cost",
         scope=subscriptionScope,
         time_grain="Monthly",
+        opts=ResourceOptions(ignore_changes=["time_period"]),
         time_period=azure_native.consumption.BudgetTimePeriodArgs(
-            end_date="2031-12-01T00:00:00Z",
-            start_date="2021-06-01T00:00:00Z",
+            end_date="2031-06-01T00:00:00Z",
+            start_date=startDate,
         ),
         filter=azure_native.consumption.BudgetFilterArgs(
             and_=[
